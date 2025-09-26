@@ -64,37 +64,48 @@ defense_shop.row("Shield 🛡️")
 defense_shop.row("Defense system 🚩")
 
 #------------------
+#Menu Structure </>
+#------------------
+
+MENUS = {"start": {"markup": start_menu, "parent": None},
+    "Shop 🛒": {"markup": shop_menu, "parent": "start"},
+    "Air Force ✈️": {"markup": air_force_shop, "parent": "Shop 🛒"},
+    "A-Munitions 🎇": {"markup": a_munitions_shop, "parent": "Air Force ✈️"},
+    "Navy ⚓": {"markup": navy_shop, "parent": "Shop 🛒"},
+    "B-Munitions 🎇": {"markup": b_munitions, "parent": "Navy ⚓"},
+    "Defenses 🛡️": {"markup": defense_shop, "parent": "Shop 🛒"},
+    }
+
+def add_back (menu_name) :
+    if MENUS[menu_name] ["parent"] :
+        MENUS[menu_name]["markup"].row ("Back 🔙") 
+for name in MENUS :
+    add_back(name)
+
+#------------------
 #Handlers </>
 #------------------
 
-@bot.message_handler (commands =["start"])
-def start (message) :
-    print (message.chat.id)
-    bot.send_message (message.chat.id , "Choose an option:" , reply_markup=start_menu)
+user_state = {}
 
-@bot.message_handler (func=lambda m: m.text =="Shop 🛒")
-def shop (message) :
-    bot.send_message (message.chat.id , "Choose an option: " , reply_markup=shop_menu)
+@bot.message_handler(commands="start")
+def start(message) :
+    user_state[message.chat.id] = "start"
+    bot.send_message(message.chat.id , "Choose an option:" , reply_markup=start_menu)
 
-@bot.message_handler (func=lambda m: m.text =="Air Force ✈️")
-def air_force_shop_func (message) :
-    bot.send_message (message.chat.id , "Choose an option:" , reply_markup=air_force_shop)
+@bot.message_handler(func=lambda m: True)
+def menu_handler (message) :
+    if message.text == "Back 🔙" :
+        current_menu = user_state.get (message.chat.id , "start")
+        parent = MENUS[current_menu]["parent"]
+        user_state [message.chat.id] = parent
+        bot.send_message(message.chat.id , "Choose an option:" , reply_markup=MENUS[parent]["markup"])
+    elif message.text in MENUS :
+        user_state[message.chat.id] = message.text
+        bot.send_message(message.chat.id , "Choose an option:" , reply_markup=MENUS[message.text]["markup"])
+    else :
+        bot.send_message (message.chat.id , "❌ Invalid request.")
 
-@bot.message_handler (func=lambda m: m.text =="A-Munitions 🎇")
-def munitions_shop_func (message) :
-    bot.send_message (message.chat.id , "Choose an option:" , reply_markup=a_munitions_shop)
-
-@bot.message_handler (func=lambda m: m.text =="Navy ⚓")
-def navy_shop_func (message) :
-    bot.send_message (message.chat.id , "Choose an option: " , reply_markup=navy_shop)
-
-@bot.message_handler (func=lambda m: m.text =="B-Munitions 🎇")
-def b_munitions_func (message):
-    bot.send_message (message.chat.id , "Choose an option: " , reply_markup=b_munitions)
-
-@bot.message_handler (func=lambda m: m.text == "Defenses 🛡️")
-def defense_shop_func (message):
-    bot.send_message(message.chat.id , "Choose an option:" , reply_markup=defense_shop)
-
+    
 print("Bot is running...")
 bot.polling(non_stop=True)
